@@ -6,7 +6,8 @@ const Usuario = require("../modelos/usuario_modelo");
 const bcrypt = require("bcrypt-nodejs");
 
 function agregarHabitacion(req, res) {
-    let habitacion = new Habitacion();
+    if (req.user.rol === "ROL_ADMIN"){
+        let habitacion = new Habitacion();
     let hotelId = req.params.idH;
     let params = req.body;
 
@@ -56,6 +57,8 @@ function agregarHabitacion(req, res) {
         }).populate("habitaciones");
     }
 }
+    }
+    
 
 function obtenerHabitaciones(req, res) {
     Room.find({}).exec((err, habitaciones) => {

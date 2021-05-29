@@ -1,6 +1,7 @@
 "use strict";
 
 const express = require("express");
+const app = express();
 const bodyParser = require("body-parser");
 const cors = require("cors");
 
@@ -12,7 +13,6 @@ const reservacionRutas = require("./src/rutas/reservacion_rutas");
 const habitacionRutas = require("./src/rutas/habitacion_rutas");
 const servicioRutas = require("./src/rutas/servicio_rutas");
 
-const app = express();
 
 app.use(cors({ origin: true, credentials: true }));
 app.use(bodyParser.urlencoded({ extended: false }));

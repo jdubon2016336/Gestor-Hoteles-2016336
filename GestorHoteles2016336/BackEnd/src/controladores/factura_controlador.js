@@ -8,7 +8,8 @@ const moment = require("moment");
 
 
 function agregarFactura(req, res) {
-    var reservacionId = req.params.idR;
+    if(req.user.rol === "ROL_GERENTE"){
+        var reservacionId = req.params.idR;
     var id = req.user.sub;
 
     Hotel.findOne({ gerente: id }).exec((err, hotelEncontrado) => {
@@ -82,6 +83,8 @@ function agregarFactura(req, res) {
     });
 }
 
+    }
+    
 function obtenerFacturasGerente(req, res) {
     var id = req.user.sub;
 

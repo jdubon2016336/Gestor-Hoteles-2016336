@@ -6,22 +6,24 @@ const mdAuth = require("../middlewares/authenticated");
 
 let api = express.Router();
 
-api.post("/agregarHotel", [mdAuth.ensureUser, mdAuth.ensureAdmin], hotelControlador.agregarHotel);
+api.post("/agregarHotel", mdAuth.ensureUser, hotelControlador.agregarHotel);
 
-api.post("/editarHotel/:idH", [mdAuth.ensureUser, mdAuth.ensureAdmin], hotelControlador.editarHotel);
+api.post("/editarHotel/:idH", mdAuth.ensureUser, hotelControlador.editarHotel);
 
-api.delete("/eliminarHotel/:idH", [mdAuth.ensureUser, mdAuth.ensureAdmin], hotelControlador.eliminarHotel);
+api.delete("/eliminarHotel/:idH", mdAuth.ensureUser, hotelControlador.eliminarHotel);
 
 api.get("/obtenerHoteles", hotelControlador.obtenerHoteles );
 
-api.get("/obtenerHotel/:idH", [mdAuth.ensureUser], hotelControlador.obtenerHotel);
+api.get("/obtenerHotel/:idH", mdAuth.ensureUser, hotelControlador.obtenerHotel);
 
-api.get("/encontrarHotel", [mdAuth.ensureUser, mdAuth.ensureAdminOrAdminHotel], hotelControlador.encontrarHotel);
+api.get("/encontrarHotel", hotelControlador.encontrarHotel);
 
-api.get( "/historial", [mdAuth.ensureUser], hotelControlador.historial);
+api.get( "/historial", mdAuth.ensureUser, hotelControlador.historial);
 
 api.get("/obtenerHotelesRecomendados", hotelControlador.obtenerHotelesRecomendados);
 
-api.get( "/habitacionesPorHotel/:idH", [mdAuth.ensureUser], hotelControlador.habitacionesPorHotel);
+api.get( "/habitacionesPorHotel/:idH", mdAuth.ensureUser, hotelControlador.habitacionesPorHotel);
+
+api.get("/pdfHotel/:id", mdAuth.ensureUser, hotelControlador.pdfHotel);
 
 module.exports = api;

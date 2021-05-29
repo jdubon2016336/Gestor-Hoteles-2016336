@@ -1,5 +1,7 @@
 const mongoose = require("mongoose");
 const app = require("./app");
+const Usuario = require("./src/modelos/usuario_modelo");
+const bcrypt = require("bcrypt-nodejs");
 
     mongoose.Promise = global.Promise
     mongoose.connect('mongodb://localhost:27017/dbGestorHoteles', { useNewUrlParser: true, useUnifiedTopology: true }).then(()=>{
@@ -22,8 +24,8 @@ const app = require("./app");
             if(usuarioEncontrado && usuarioEncontrado.length >=1){
                 console.log('Este usuario ya existe'); 
             }else{
-                bcrypt.hash(usuario.contraseña, null, null, (err, contraseñaEncriptada)=>{
-                    usuario.contraseña = contraseñaEncriptada;
+                bcrypt.hash(usuario.password, null, null, (err, contraseñaEncriptada)=>{
+                    usuario.password = contraseñaEncriptada;
                     
                     usuario.save((err, usuarioGuardado)=>{
                         if(err)  console.log('Error en la solicitud de guardado');

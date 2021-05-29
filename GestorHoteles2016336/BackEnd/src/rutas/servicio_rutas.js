@@ -1,43 +1,20 @@
 "use strict";
 
 const express = require("express");
-const serviceController = require("../controllers/service-controller");
+const servicioControlador = require("../controladores/servicio_controlador");
 const mdAuth = require("../middlewares/authenticated");
 
 var api = express.Router();
 
-api.post(
-    "/createService/:idH", [mdAuth.ensureUser, mdAuth.ensureAdminHotel],
-    serviceController.createServices
-);
+api.post("/agregarServicio/:idH", mdAuth.ensureUser, servicioControlador.agregarServicio);
 
-api.get("/getServices", [mdAuth.ensureUser], serviceController.getServices);
+api.get("/obtenerServicios",mdAuth.ensureUser, servicioControlador.obtenerServicios);
 
-api.get(
-    "/getService/:id", [mdAuth.ensureUser, mdAuth.ensureAdminHotel],
-    serviceController.getService
-);
+api.get("/obtenerServicio/:id", mdAuth.ensureUser, servicioControlador.obtenerServicio);
 
-api.put(
-    "/updateService/:id", [mdAuth.ensureUser, mdAuth.ensureAdminHotel],
-    serviceController.updateService
-);
+api.put( "/:idR/agregarServicioAReservacion/:idS", mdAuth.ensureUser,servicioControlador.agregarServicioAReservacion);
 
-api.delete(
-    "/deleteService/:id", [mdAuth.ensureUser, mdAuth.ensureAdminHotel],
-    serviceController.deleteService
-);
-api.put(
-    "/:idR/setServiceReservation/:idS", [mdAuth.ensureUser],
-    serviceController.setServiceReservation
-);
-api.put(
-    "/createServiceByHotelAdmin", [mdAuth.ensureUser, mdAuth.ensureAdminHotel],
-    serviceController.createServiceByHotelAdmin
-);
-api.get(
-    "/getServicesHotel", [mdAuth.ensureUser, mdAuth.ensureAdminHotel],
-    serviceController.getServicesHotel
-);
+api.get("/obtenerServicioHotel", mdAuth.ensureUser, servicioControlador.obtenerServicioHotel);
+
 
 module.exports = api;

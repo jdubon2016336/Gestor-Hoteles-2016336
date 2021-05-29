@@ -1,27 +1,17 @@
 "use strict";
 
 const express = require("express");
-const reservationController = require("../controllers/reservation-controller");
+const reservacionControlador = require("../controladores/reservacion_controlador");
 const mdAuth = require("../middlewares/authenticated");
 
 var api = express.Router();
 
-api.get("/pruebaReservation", reservationController.prueba);
-api.post(
-    "/:idH/setReservation/:idU/:idR", [mdAuth.ensureUser],
-    reservationController.setReservation
-);
-api.put(
-    "/cancelReservation/:idRes", [mdAuth.ensureUser],
-    reservationController.cancelReservation
-);
-api.get(
-    "/getReservationsByHotelAdmin", [mdAuth.ensureUser, mdAuth.ensureAdminHotel],
-    reservationController.getReservationsByHotelAdmin
-);
-api.get(
-    "/getReservationsByUser", [mdAuth.ensureUser],
-    reservationController.getReservationsByUser
-);
+api.post( "/:idH/agregarReservacion/:idU/:idR", mdAuth.ensureUser, reservacionControlador.agregarReservacion );
+
+api.put("/cancelarReservacion/:idRes", mdAuth.ensureUser, reservacionControlador.cancelarReservacion);
+
+api.get( "/obtenerReservacionesPorHotel", mdAuth.ensureUser, reservacionControlador.obtenerReservacionesPorHotel);
+
+api.get( "/obtenerReservacionUsuario", mdAuth.ensureUser, reservacionControlador.obtenerReservacionUsuario);
 
 module.exports = api;

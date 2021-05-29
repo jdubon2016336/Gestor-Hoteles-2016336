@@ -11,35 +11,35 @@ const fs  = require("fs");
 var datos;
 
 function pdfHotel(req, res){
-    let hotelId = req.params.idH;
+    
+    if(req.user.rol == "ROL_ADMIN"){
+        var hotelId = req.params.id;
 
-    Hotel.findById(hotelId).populate("gerente").exec((err, hotel) => {
-            if (err) {
-                return res.status(500).send({  message: "Error general" });
-            } else if (hotel) {
-                return res.send({  hotel });
-            } else {
-                return res.status(404).send({ message: "No se encontraron hoteles" });
-            }
+    Hotel.findById(hotelId).exec((err, hotelEncontrado) => {
+            if (err) return res.status(500).send({  message: "Error general" });
+            if (!hotelEncontrado) return res.status(404).send({ message: "No se encontraron hoteles" });
+            
+        datos = hotelEncontrado;
+        var doc = new pdf();
+        doc.pipe(fs.createWriteStream('reporte del hotel.pdf'));
+
+        doc.text(`Hotel Detallado :`,{
+            align: 'center',
+        })
+
+        doc.text(datos,{
+            align: 'left'
+        });
+
+        doc.end();
+        return res.status(200).send({mensaje: "PDF generado"});
         });
 
 
-        datos = hotel;
-            var doc = new pdf();
-            doc.pipe(fs.createWriteStream(`./scr/pdf/hotel de  ${req.user.nombre}.pdf`));
-
-            doc.text(`Hotel Detallado :`,{
-                align: 'center',
-            })
-
-            doc.text(datos,{
-                align: 'left'
-            });
-
-            doc.end();
-            return res.status(200).send({mensaje: "PDF generado"});
 }
 
+    }
+    
 
 function agregarHotel(req,res){
     if (req.user.rol === "ROL_ADMIN"){
@@ -52,7 +52,7 @@ function agregarHotel(req,res){
         hotel.gerente = params.gerente;
         hotel.habitaciones = [];
 
-        Hotel.find({nombreHotel: hotel.nombreHotel}).exec((err, empresaEncontrada)=>{
+        Hotel.find({nombreHotel: hotel.nombre}).exec((err, hotelEncontrado)=>{
             if(err) return res.status(500).send({mensaje: 'Error en la solicitud de hoetl'});
 
             if(hotelEncontrado && hotelEncontrado.length >=1){
@@ -132,13 +132,26 @@ function obtenerHotel(req, res) {
 
 function encontrarHotel(req, res) {
     var params = req.body;
+    var nombre = params.nombre;
+    var direccion = params.direccion;
 
-    Hotel.findOne({ "nombre": params.nombre } || {"direccion": params.direccion }, (err, hotelEncontrado)=>{
-        if(err) return res.status(500).send({ mensaje:"Error en la peticion" });
-        if(!hotelEncontrado) return res.status(500).send({mensaje: 'Error al obtener el Empleado' });
-
-        return res.status(200).send({ hotelEncontrado });
-    })
+    if(!direccion){
+        Hotel.findOne({nombre : params.nombre}, (err, hotelEncontrado)=>{
+            if(err) return res.status(500).send({ mensaje:"Error en la peticion" });
+            if(!hotelEncontrado) return res.status(500).send({mensaje: 'Error al obtener el Hotel' });
+            console.log(hotelEncontrado);
+            return res.status(200).send({ hotelEncontrado });
+        })
+    }else{
+        Hotel.findOne({direccion : params.direccion}, (err, hotelEncontrado)=>{
+            if(err) return res.status(500).send({ mensaje:"Error en la peticion" });
+            if(!hotelEncontrado) return res.status(500).send({mensaje: 'Error al obtener el Hotel' });
+            console.log(hotelEncontrado);
+            return res.status(200).send({ hotelEncontrado });
+        })
+        
+    }
+    
 
 }
 

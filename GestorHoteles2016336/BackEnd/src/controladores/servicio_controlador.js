@@ -1,240 +1,147 @@
 "use strict";
 
-const Services = require("./../models/service-model");
-const Reservation = require("./../models/reservation-model");
-const Hotel = require("./../models/hotel-model");
-const User = require("./../models/user-model");
+const Servicio = require("../modelos/servicio_modelo");
+const Reservacion = require("../modelos/reservacion_modelo");
+const Hotel = require("../modelos/hotel_modelo");
+const User = require("../modelos/usuario_modelo");
 
-function createServices(req, res) {
-    let services = new Services();
+function agregarServicio(req, res) {
+    if(req.user.rol == "ROL_GERENTE"){
+        let servicio = new Servicio();
     let params = req.body;
     let hotelId = req.params.idH;
+    
     console.log(params);
-    if (!params.name && !params.price_service && !hotelId) {
-        return res.send({ ok: false, message: "Ingrese sus datos obligatorios" });
+    if (!params.nombre && !params.precio && !hotelId) {
+        return res.send({ message: "Ingrese sus datos obligatorios" });
     } else {
-        Hotel.findById(hotelId, (err, hotelFound) => {
+        Hotel.findById(hotelId, (err, hotelEncontrado) => {
+            
+            console.log(hotelEncontrado);
             if (err) {
-                return res.status(500).send({ ok: false, message: "Error general" });
-            } else if (hotelFound) {
-                let serviceExists = false;
-                hotelFound.services.forEach((service) => {
-                    if (service.name.toLowerCase() == params.name.toLowerCase()) {
-                        serviceExists = true;
-                    }
+                return res.status(500).send({ message: "Error general" });
+            } else if (hotelEncontrado) {
+                let existe = false;
+                hotelEncontrado.servicios.forEach((servicio) => {
+                    if (servicio.nombre == params.nombre) {
+                        existe = true;
+                    } 
                 });
-                if (!serviceExists) {
-                    services.name = params.name;
-                    services.price_service = params.price_service;
-                    services.save((err, serviceSaved) => {
+                if (!existe) {
+                    servicio.nombre = params.nombre;
+                    servicio.precio = params.precio;
+                    servicio.save((err, servicioGuardado) => {
                         if (err) {
-                            return res
-                                .status(500)
-                                .send({ ok: false, message: "Error general" });
-                        } else if (serviceSaved) {
+                            return res.status(500).send({ message: "Error general" });
+                        } else if (servicioGuardado) {
                             Hotel.findByIdAndUpdate(
-                                hotelId, { $push: { services: serviceSaved._id } }, { new: true },
-                                (err, hotelUpdated) => {
+                                hotelId, { $push: { servicios: servicioGuardado._id } }, { new: true },
+                                (err, hotelActualizado) => {
                                     if (err) {
-                                        return res
-                                            .status(500)
-                                            .send({ ok: false, message: "Error general" });
-                                    } else if (hotelUpdated) {
-                                        return res.send({
-                                            ok: true,
-                                            message: "Servicio creado correctamente",
-                                            serviceSaved,
-                                            hotelUpdated,
-                                        });
+                                        return res.status(500).send({ message: "Error general" });
+                                    } else if (hotelActualizado) {
+                                        return res.send({message: "Servicio creado correctamente",servicioGuardado,hotelActualizado });
                                     } else {
-                                        return res
-                                            .status(404)
-                                            .send({ ok: false, message: "No existe el hotel" });
+                                        return res.status(404).send({ message: "No existe el hotel" });
                                     }
                                 }
                             );
                         } else {
-                            return res.status(404).send({
-                                ok: false,
-                                message: "No se guardo correctamente el servicio",
-                            });
+                            return res.status(404).send({message: "No se guardo correctamente el servicio"});
                         }
                     });
                 } else {
-                    return res.json({ ok: false, message: "El servicio ya existe" });
+                    return res.json({ message: "El servicio ya existe" });
                 }
             } else {
-                return res.json({ ok: false, message: "no existe ese hotel" });
+                return res.json({ message: "no existe ese hotel" });
             }
-        }).populate("services");
+        }).populate("servicios");
     }
 }
 
-function getServices(req, res) {
-    Services.find({}).exec((err, services) => {
+    }
+    
+function obtenerServicios(req, res) {
+    Servicio.find({}).exec((err, servicios) => {
         if (err) {
-            return res.status(500).send({ ok: false, message: "Error general" });
-        } else if (services) {
-            return res.send({ ok: true, message: "Servicios encontrados", services });
+            return res.status(500).send({ message: "Error general" });
+        } else if (servicios) {
+            return res.send({ ok: true, message: "Servicios encontrados", servicios });
         } else {
             return res.status(404).send({ ok: false, message: "Sin servicios" });
         }
     });
 }
 
-function getService(req, res) {
-    let servicesId = req.params.id;
+function obtenerServicio(req, res) {
+    let id = req.params.id;
 
-    if (!servicesid) {
-        return res.status(400).send({ ok: false, message: "Error, ServicesID" });
-    } else {
-        Services.findById(servicesId).exec((err, service) => {
-            if (err) {
-                return res.status(500).send({ ok: false, message: "Error general" });
-            } else if (service) {
-                return res.send({ ok: true, message: "Servicio encontrado", service });
-            } else {
-                return res.status(404).send({ ok: false, message: "No servicio" });
-            }
-        });
-    }
+    Servicio.findById(id).exec((err, servicio) => {
+        if (err) {
+            return res.status(500).send({ ok: false, message: "Error general" });
+        } else if (servicio) {
+            return res.send({  message: "Servicio encontrado", servicio });
+        } else {
+            return res.status(404).send({ message: "No servicio" });
+        }
+    });
+    
 }
 
-function updateService(req, res) {
-    let servicesId = req.params.id;
-    let update = req.body;
-
-    if (!servicesId) {
-        return res
-            .status(403)
-            .send({ ok: false, message: "Ingrese los parametros" });
-    } else {
-        Services.findByIdAndUpdate(
-            servicesId,
-            update, { new: true },
-            (err, serviceUpdated) => {
-                if (err) {
-                    return res.status(500).send({ ok: false, message: "Error general" });
-                } else if (serviceUpdated) {
-                    return res.send({
-                        ok: false,
-                        message: "Servicio actualizado",
-                        serviceUpdated,
-                    });
-                } else {
-                    return res.status(404).send({
-                        ok: false,
-                        message: "Error, no se logro actualizar la habitacion",
-                    });
-                }
-            }
-        );
-    }
-}
-
-function deleteService(req, res) {
-    let serviceId = req.params.id;
-
-    if (!serviceId) {
-        return res
-            .status(403)
-            .send({ ok: false, message: "Ingrese los datos necesarios" });
-    } else {
-        Services.findById(serviceId, (err, serviceFound) => {
-            if (err) {
-                return res.status(500).send({ ok: false, message: "Error General" });
-            } else if (serviceFound) {
-                Services.findByIdAndDelete(serviceId, (err, serviceRemoved) => {
-                    if (err) {
-                        return res
-                            .status(500)
-                            .send({ ok: false, message: "Error general" });
-                    } else if (serviceRemoved) {
-                        return res.send({ ok: true, message: "Servicio eliminado" });
-                    } else {
-                        return res.status(400).send({
-                            ok: false,
-                            message: "No se logro eliminar la habitacion",
-                        });
-                    }
-                });
-            } else {
-                return res
-                    .status(404)
-                    .send({ ok: false, message: "No existe el servicio" });
-            }
-        });
-    }
-}
-
-function setServiceReservation(req, res) {
-    var reservationId = req.params.idR;
-    var serviceId = req.params.idS;
+function agregarServicioAReservacion(req, res) {
+    var reservacionId = req.params.idR;
+    var servicioId = req.params.idS;
     var userId = req.user.sub;
 
-    Services.findById(serviceId, (err, serviceFinded) => {
+    Servicio.findById(servicioId, (err, servicioEncontrado) => {
         if (err) {
             return res.status(500).send({ message: "Error al buscar servicio" });
-        } else if (serviceFinded) {
-            var total = serviceFinded.price_service;
-            Reservation.findById(reservationId, (err, reservationFinded) => {
+        } else if (servicioEncontrado) {
+            var total = servicioEncontrado.precio;
+            Reservacion.findById(reservacionId, (err, reservacionEncontrada) => {
                 if (err) {
-                    return res
-                        .status(500)
-                        .send({ message: "Error al buscar reservación" });
-                } else if (reservationFinded) {
-                    var confirmServiceRes = false;
-                    reservationFinded.services.forEach((element) => {
-                        if (element == serviceId) {
-                            confirmServiceRes = true;
+                    return res.status(500).send({ message: "Error al buscar reservación" });
+                } else if (reservacionEncontrada) {
+                    var confirmacion = false;
+                    reservacionEncontrada.servicios.forEach((servicio) => {
+                        if (servicio == servicioId) {
+                            confirmacion = true;
                         }
                     });
-                    var hotelId = reservationFinded.hotel;
-                    Hotel.findById(hotelId, (err, hotelFinded) => {
+                    var hotelId = reservacionEncontrada.hotel;
+                    Hotel.findById(hotelId, (err, hotelEncontrado) => {
                         if (err) {
                             return res.status(500).send({ message: "Error al buscar hotel" });
-                        } else if (hotelFinded) {
-                            var confirmService = false;
-                            hotelFinded.services.forEach((element) => {
-                                if (element == serviceId) {
-                                    confirmService = true;
+                        } else if (hotelEncontrado) {
+                            var confServicio = false;
+                            hotelEncontrado.servicios.forEach((servicio) => {
+                                if (servicio == serviceId) {
+                                    confServicio = true;
                                 }
                             });
-                            if (confirmService == false || confirmServiceRes == true) {
+                            if (confServicio == false || confServicio == true) {
                                 return res.send({
                                     message: "El servicio no existe en el hotel o ya fue añadido",
                                 });
                             } else {
-                                if (reservationFinded.user == userId) {
-                                    total = total + reservationFinded.total_price;
+                                if (reservacionEncontrada.usuario == userId) {
+                                    total = total + reservacionEncontrada.precio;
                                     console.log(total);
-                                    Reservation.findByIdAndUpdate(
-                                        reservationId, {
-                                            total_price: total,
-                                            $push: { services: serviceFinded._id },
-                                        }, { new: true },
-                                        (err, reservationUpdated) => {
+                                    Reservacion.findByIdAndUpdate(reservacionId, {precio: total,$push: { servicios: servicioEncontrado._id },
+                                    }, { new: true },(err, reservacionActualizada) => {
                                             if (err) {
                                                 console.log(err);
-                                                return res
-                                                    .status(500)
-                                                    .send({ message: "Error al agregar servicio" });
-                                            } else if (reservationUpdated) {
-                                                return res.send({
-                                                    message: "Se agregó el servicio exitosamente",
-                                                    reservationUpdated,
-                                                });
+                                                return res.status(500).send({ message: "Error al agregar servicio" });
+                                            } else if (reservacionActualizada) {
+                                                return res.send({message: "Se agregó el servicio exitosamente",reservacionActualizada,});
                                             } else {
-                                                return res
-                                                    .status(500)
-                                                    .send({ message: "No se agregó el servicio" });
+                                                return res.status(500).send({ message: "No se agregó el servicio" });
                                             }
                                         }
                                     );
                                 } else {
-                                    return res.status(401).send({
-                                        message: "No tienes permisos para agregar servicios a esta reservación",
-                                    });
+                                    return res.status(401).send({message: "No tienes permisos para agregar servicios a esta reservación"});
                                 }
                             }
                         } else {
@@ -374,34 +281,29 @@ function createServiceByHotelAdmin(req, res) {
     }
 }
 
-function getServicesHotel(req, res) {
+function obtenerServicioHotel(req, res) {
     let userId = req.user.sub;
     if (!userId) {
-        return res.json({ ok: false, message: "Ingrese el id del usuario" });
+        return res.json({ message: "Ingrese el id del usuario" });
     } else {
-        Hotel.findOne({ user_admin_hotel: userId }, (err, hotelFound) => {
+        Hotel.findOne({ gerente: userId }, (err, hotelEncontrado) => {
             if (err) {
-                return res.status(500).send({ ok: false, message: "Error general" });
-            } else if (hotelFound) {
-                return res.json({
-                    ok: true,
-                    message: "Servicios por hotel",
-                    services: hotelFound.services,
-                });
+                return res.status(500).send({ message: "Error general" });
+            } else if (hotelEncontrado) {
+                return res.json({message: "Servicios por hotel", servicios: hotelEncontrado.servicios});
             } else {
-                return res.json({ ok: false, message: "No existe el hotel" });
+                return res.json({ message: "No existe el hotel" });
             }
-        }).populate("services");
+        }).populate("servicios");
     }
 }
 
 module.exports = {
-    createServices,
-    deleteService,
-    getService,
-    getServices,
-    updateService,
-    setServiceReservation,
+    agregarServicio,
+    obtenerServicio,
+    obtenerServicios,
+    agregarServicioAReservacion,
+    obtenerServicioHotel,
+
     createServiceByHotelAdmin,
-    getServicesHotel,
 };

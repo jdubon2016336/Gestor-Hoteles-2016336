@@ -5,7 +5,7 @@ var Schema = mongoose.Schema;
 
 var servicioSchema = Schema({
     nombre: String,
-    precioServicio: Number
+    precio: Number
 });
 
 module.exports = mongoose.model("servicio",servicioSchema);

@@ -6,14 +6,14 @@ const mdAuth = require("../middlewares/authenticated");
 
 var api = express.Router();
 
-api.post("/agregarFactura/:idR",[mdAuth.ensureUser, mdAuth.ensureGerente], facturaControlador.agregarFactura);
+api.post("/agregarFactura/:idR",mdAuth.ensureUser, facturaControlador.agregarFactura);
 
-api.get("/obtenerFacturasGerente",[mdAuth.ensureUser,mdAuth.ensureGerente], facturaControlador.obtenerFacturasGerente);
+api.get("/obtenerFacturasGerente",mdAuth.ensureUser, facturaControlador.obtenerFacturasGerente);
 
-api.get("/obtenerFactura/:id",[mdAuth.ensureUser,mdAuth.ensureGerente], facturaControlador.obtenerFactura);
+api.get("/obtenerFactura/:id",mdAuth.ensureUser, facturaControlador.obtenerFactura);
 
-api.get("/obtenerFacturasUsuario",[mdAuth.ensureUser], facturaControlador.obtenerFacturasCliente);
+api.get("/obtenerFacturasUsuario",mdAuth.ensureUser, facturaControlador.obtenerFacturasCliente);
 
-api.get("/obtenerFacturaUuario/:id",[mdAuth.ensureUser], facturaControlador.obtenerFacturaCliente);
+api.get("/obtenerFacturaUuario/:id",mdAuth.ensureUser, facturaControlador.obtenerFacturaCliente);
 
 module.exports = api;

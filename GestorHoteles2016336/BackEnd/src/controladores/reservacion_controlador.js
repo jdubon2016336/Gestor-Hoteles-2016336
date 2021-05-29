@@ -8,20 +8,22 @@ const moment = require("moment");
 
 
 function agregarReservacion(req, res) {
-    var hotelId = req.params.idH;
+
+    if (req.user.rol === "ROL_CLIENTE"){
+        var hotelId = req.params.idH;
     var habId = req.params.idR;
     var userId = req.params.idU;
     var params = req.body;
 
     console.log(params);
-
+ 
     if (params.fechaInicio && params.fechaFin) {
         var inicio = moment(params.fechaInicio, "YYYY-MM-DD");
         var fin = moment(params.fechaFin, "YYYY-MM-DD");
         if (inicio > fin) {
             return res.send({message: "La fecha de estadía sucede después que la fecha de retiro"});
         } else {
-            var totalDays = end.diff(inicio, "days");
+            var totalDays = fin.diff(inicio, "days");
             Usuario.findById(userId, (err, usuarioEncontrado) => {
                 if (err) {
                     return res.status(500).send({ message: "Error al buscar usuario" });
@@ -111,8 +113,7 @@ function agregarReservacion(req, res) {
                                                 return res.send({ message: "La habitación no pertenece a este hotel" });
                                             }
                                         } else {
-                                            return res.send({ message: "La habitación estará disponible hasta el día", disponible,
-                                            });
+                                            return res.send({ message: "La habitación estará disponible hasta el día", disponible});
                                         }
                                     } else {
                                         return res.send({ message: "Habitación no encontrada" });
@@ -134,6 +135,8 @@ function agregarReservacion(req, res) {
         return res.send({ message: "Ingrese los datos mínimos" });
     }
 }
+    }
+    
 
 function cancelarReservacion(req, res) {
     var reservacionId = req.params.idRes;
@@ -146,7 +149,7 @@ function cancelarReservacion(req, res) {
             var habId = reservacionEncontrada.habitacion;
             var hotelId = reservacionEncontrada.hotel;
 
-            if (userId == req.user.sub || req.user.role == "ROL_ADMIN" ||req.user.role == "ROL_GERENTE") {
+            if (userId == req.user.sub || req.user.rol == "ROL_ADMIN" ||req.user.rol == "ROL_GERENTE") {
                 Reservacion.findByIdAndRemove(reservacionId,(err, reservacionEliminada) => {
                         if (err) {
                             return res.status(500).send({ message: "Error al cancelar la reservación" });
@@ -165,40 +168,28 @@ function cancelarReservacion(req, res) {
                                                         if (err) {
                                                             return res.status(500).send({ message: "Error al actualizar conteo de hotel" });
                                                         } else if (hotelActualizado) {
-                                                            Habitacion.findByIdAndUpdate(habId, { disponible: true, disponibilidad: null },
-                                                                (err, roomUpdated) => {
+                                                            Habitacion.findByIdAndUpdate(habId, { disponible: true, dias: null },
+                                                                (err, habitacionActualizada) => {
                                                                     if (err) {
-                                                                        return res.status(500).send({
-                                                                            message: "Error al actualizar disponibilidad de habitación",
-                                                                        });
-                                                                    } else if (roomUpdated) {
-                                                                        return res.send({
-                                                                            message: "Reservación cancelada/eliminada exitosamente",
-                                                                        });
+                                                                        return res.status(500).send({message: "Error al actualizar disponibilidad de habitación" });
+                                                                    } else if (habitacionActualizada) {
+                                                                        return res.send({ message: "Reservación cancelada/eliminada exitosamente"});
                                                                     } else {
-                                                                        return res.status(500).send({
-                                                                            message: "No se actualizó la disponibilidad de la habitación",
-                                                                        });
+                                                                        return res.status(500).send({message: "No se actualizó la disponibilidad de la habitación"});
                                                                     }
                                                                 }
                                                             );
                                                         } else {
-                                                            return res
-                                                                .status(500)
-                                                                .send({ message: "No se actualizó en conteo" });
+                                                            return res.status(500).send({ message: "No se actualizó en conteo" });
                                                         }
                                                     }
                                                 );
                                             } else {
-                                                return res
-                                                    .status(404)
-                                                    .send({ message: "No se encontró el hotel" });
+                                                return res.status(404).send({ message: "No se encontró el hotel" });
                                             }
                                         });
                                     } else {
-                                        return res.status(500).send({
-                                            message: "No se eliminaron los registros en usuario",
-                                        });
+                                        return res.status(500).send({message: "No se eliminaron los registros en usuario"});
                                     }
                                 }
                             );
@@ -208,58 +199,48 @@ function cancelarReservacion(req, res) {
                     }
                 );
             } else {
-                return res
-                    .status(401)
-                    .send({ messag: "No tienes permiso de cancelar esta reservación" });
+                return res.status(401).send({ messag: "No tienes permiso de cancelar esta reservación" });
             }
         } else {
-            return res
-                .status(404)
-                .send({ message: "Reservación no existente o ya fue eliminada" });
+            return res.status(404).send({ message: "Reservación no existente o ya fue eliminada" });
         }
     });
 }
 
-function getReservationsByHotelAdmin(req, res) {
+function obtenerReservacionesPorHotel(req, res) {
     let userId = req.user.sub;
     if (!userId) {
-        return res.json({ ok: false, message: "Error, envie el id del usuario" });
+        return res.json({ message: "Error, envie el id del usuario" });
     } else {
-        Hotel.findOne({ user_admin_hotel: userId }, (err, hotelFound) => {
+        Hotel.findOne({ gerente: userId }, (err, hotelGuardado) => {
             if (err) {
-                return res.status(500).send({ ok: false, message: "Error general" });
-            } else if (hotelFound) {
-                Reservation.find({ hotel: hotelFound._id },
+                return res.status(500).send({message: "Error general" });
+            } else if (hotelGuardado) {
+                Reservacion.find({ hotel: hotelGuardado._id },
                     (err, reservationsFound) => {
                         if (err) {
-                            return res
-                                .status(500)
-                                .send({ ok: false, message: "Error general" });
+                            return res.status(500).send({ message: "Error general" });
                         } else if (reservationsFound) {
-                            return res.json({
-                                ok: true,
-                                message: "Reservaciones encontradas",
-                                reservationsFound,
-                            });
+                            return res.json({ message: "Reservaciones encontradas",reservationsFound});
                         } else {
-                            return res.json({ ok: true, message: "No hay reservaciones" });
+                            return res.json({ message: "No hay reservaciones" });
                         }
                     }
                 );
             } else {
-                return res.json({ ok: false, message: "No existe el hotel" });
+                return res.json({  message: "No existe el hotel" });
             }
         });
     }
 }
 
-function getReservationsByUser(req,res){
+function obtenerReservacionUsuario(req,res){
     let userId = req.user.sub;
-    User.findById(userId).populate("reservations").exec((err,userFinded)=>{
+    Usuario.findById(userId).populate("reservaciones").exec((err,usuarioEncontrado)=>{
         if(err){
             return res.status(500).send({message: "Error al obtener reservaciones"});
-        }else if(userFinded){
-            return res.send({message: "Reservaciones:", userFinded});
+        }else if(usuarioEncontrado){
+            return res.send({message: "Reservaciones:", usuarioEncontrado});
         }else{
             return res.send({message: "No hay reservaciones"});
         }
@@ -267,9 +248,8 @@ function getReservationsByUser(req,res){
 }
 
 module.exports = {
-
-    setReservation,
-    cancelReservation,
-    getReservationsByHotelAdmin,
-    getReservationsByUser
+  agregarReservacion,
+  cancelarReservacion,
+  obtenerReservacionesPorHotel,
+  obtenerReservacionUsuario
 };
